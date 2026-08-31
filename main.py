@@ -7,8 +7,8 @@ import random
 # ============================================================
 
 st.set_page_config(
-    page_title="KBO TEAM DASHBOARD",
-    page_icon="⚾",
+    page_title="🔮 KBO 100년 미래 예언 시뮬레이터",
+    page_icon="🔮",
     layout="centered"
 )
 
@@ -37,14 +37,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 날짜 선택 & 검색 섹션
+# 미래 날짜 선택 & 검색 섹션 (1년 뒤 ~ 100년 뒤)
 # ============================================================
 
 today = date.today()
-ten_years_ago = date(today.year - 10, 1, 1)
+one_year_later = date(today.year + 1, today.month, today.day)
+hundred_years_later = date(today.year + 100, 12, 31)
 
-st.title("⚾ KBO TEAM DASHBOARD")
-st.caption("2016년 ~ 2026년 시즌별 KBO 시뮬레이션 성적 및 가을야구 예측")
+st.title("🔮 KBO 100년 미래 예언 시뮬레이터")
+st.caption(f"미래 타임라인({one_year_later.year}년 ~ {hundred_years_later.year}년)의 KBO 성적 및 가을야구 예언")
 
 st.divider()
 
@@ -52,11 +53,11 @@ col_date, col_search = st.columns([1, 1])
 
 with col_date:
     selected_date = st.date_input(
-        "📅 기준일 선택",
-        value=today,
-        min_value=ten_years_ago,
-        max_value=today,
-        help="2016년부터 2026년 현재까지의 날짜를 자유롭게 선택할 수 있습니다."
+        "🔮 예언할 미래 날짜 선택",
+        value=one_year_later,
+        min_value=one_year_later,
+        max_value=hundred_years_later,
+        help="현재로부터 1년 뒤부터 100년 뒤까지의 미래 날짜를 지정해 성적을 예언합니다."
     )
 
 with col_search:
@@ -66,12 +67,12 @@ with col_search:
     )
 
 # ============================================================
-# 독립형 데이터 엔진 (날짜 기반 일관성 유지)
+# 독립형 데이터 엔진 (날짜 시드 기반 시뮬레이션)
 # ============================================================
 
 def generate_kbo_rankings(target_date):
     """
-    크롤링 없이 날짜 시드값(Seed)을 기반으로 항상 일관된 시즌 데이터를 생성합니다.
+    미래 날짜 시드(Seed)를 기반으로 언제 조회하든 일관된 미래 성적을 예언합니다.
     """
     base_teams = {
         "KT": {"name": "KT 위즈", "keywords": ["KT", "kt", "케이티", "KT 위즈", "ktwiz"]},
@@ -86,7 +87,7 @@ def generate_kbo_rankings(target_date):
         "키움": {"name": "키움 히어로즈", "keywords": ["키움", "키움 히어로즈", "키움히어로즈"]}
     }
 
-    # 날짜를 난수 시드로 사용하여 동일 날짜 조회 시 항상 동일한 결과 출력
+    # 미래 날짜를 난수 시드로 사용
     seed_value = int(target_date.strftime("%Y%m%d"))
     rng = random.Random(seed_value)
 
@@ -180,12 +181,12 @@ def find_team(query, teams_data):
 selected_team = find_team(user_input, current_teams)
 
 # ============================================================
-# 사이드바: 전체 10개 구단 순위표
+# 사이드바: 미래 10개 구단 순위 예언
 # ============================================================
 
 with st.sidebar:
-    st.header("🏆 KBO 전체 순위표")
-    st.caption(f"기준일: {selected_date.strftime('%Y-%m-%d')}")
+    st.header("🔮 미래 순위 예언표")
+    st.caption(f"예언 타임라인: {selected_date.strftime('%Y-%m-%d')}")
     st.divider()
 
     sorted_teams = sorted(current_teams.values(), key=lambda x: x["rank"])
@@ -200,10 +201,10 @@ with st.sidebar:
         rank_badge = f"**{rank}위**" if rank <= 5 else f"{rank}위"
         
         st.write(f"{rank_badge} **{name}** {highlight}")
-        st.caption(f"승률: {win_rate} | 게임차: {gb}")
+        st.caption(f"예상 승률: {win_rate} | 게임차: {gb}")
         
         if rank == 5:
-            st.markdown("--- 🔻 **포스트시즌 커트라인** 🔻 ---")
+            st.markdown("--- 🔻 **가을야구 커트라인** 🔻 ---")
         else:
             st.markdown("<hr style='margin: 3px 0 6px 0; border: none; border-top: 1px dashed #cccccc;'>", unsafe_allow_html=True)
 
@@ -220,18 +221,18 @@ if user_input:
         
         st.markdown(f"""
             <div class="team-header-card">
-                <h2 style="margin:0; padding-bottom: 5px;">⚾ {team['name']} <span style="font-size:0.9rem; font-weight:normal; opacity:0.8;">({selected_date.year} 시즌)</span></h2>
-                <p style="margin:0; font-size:1rem; font-weight:600;">현재 순위: <strong>{team['rank']}위</strong> | {team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
+                <h2 style="margin:0; padding-bottom: 5px;">🔮 {team['name']} <span style="font-size:0.9rem; font-weight:normal; opacity:0.8;">({selected_date.year}년 예언)</span></h2>
+                <p style="margin:0; font-size:1rem; font-weight:600;">예상 순위: <strong>{team['rank']}위</strong> | {team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
             </div>
         """, unsafe_allow_html=True)
 
-        tab1, tab2 = st.tabs(["📊 팀 성적 상세", "🍂 가을야구 예측"])
+        tab1, tab2 = st.tabs(["📊 미래 예상 성적", "🍂 가을야구 확률 예언"])
 
         with tab1:
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("순위", f"{team['rank']}위")
-            c2.metric("전적", f"{team['wins']}승 {team['draws']}무 {team['losses']}패")
-            c3.metric("승률", team["win_rate"])
+            c1.metric("예상 순위", f"{team['rank']}위")
+            c2.metric("예상 전적", f"{team['wins']}승 {team['draws']}무 {team['losses']}패")
+            c3.metric("예상 승률", team["win_rate"])
             c4.metric("연속 기록", team["streak"])
 
             st.markdown("---")
@@ -242,19 +243,19 @@ if user_input:
 
         with tab2:
             probability = calculate_playoff_probability(team, current_teams)
-            st.markdown("##### 🏆 포스트시즌 예상 진출 확률")
+            st.markdown("##### 🔮 포스트시즌 진출 예언 확률")
             st.progress(probability / 100)
             
             p_col1, p_col2 = st.columns([1, 2])
             with p_col1:
-                st.metric("예상 진출 확률", f"{probability}%")
+                st.metric("진출 예언 확률", f"{probability}%")
             with p_col2:
                 if probability >= 70:
-                    st.success("포스트시즌 진출 가능성이 매우 높습니다!")
+                    st.success("미래의 가을야구 진출 가능성이 매우 명확합니다!")
                 elif probability >= 40:
-                    st.warning("치열한 5위 싸움이 진행 중입니다.")
+                    st.warning("미래의 치열한 5위 싸움이 예견됩니다.")
                 else:
-                    st.error("가을야구 진출을 위해 반등이 필요합니다.")
+                    st.error("미래 성적 반등을 위한 과감한 리빌딩이 필요합니다.")
 
 else:
-    st.info("👆 상단에서 **기준일**을 선택하고 **팀명**을 검색해 주세요. (왼쪽 사이드바에서 순위를 확인할 수 있습니다.)")
+    st.info("👆 상단에서 **예언할 미래 날짜**를 선택하고 **팀명**을 검색해 보세요. (좌측 사이드바에서 미래 순위표를 확인할 수 있습니다.)")
