@@ -1,51 +1,111 @@
 import streamlit as st
 from datetime import date
 import random
+import time
 
 # ============================================================
 # Streamlit 페이지 기본 설정
 # ============================================================
 
 st.set_page_config(
-    page_title="🔮 KBO 100년 미래 예언 시뮬레이터",
-    page_icon="🔮",
+    page_title="🔮 COSMIC KBO PREDICT",
+    page_icon="🌌",
     layout="centered"
 )
 
 # ============================================================
-# 커스텀 UI 디자인 (CSS)
+# 아방가르드 은하수 & 수정구슬 연출 CSS (무채색 제거, 화려한 그라데이션)
 # ============================================================
 
 st.markdown("""
     <style>
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
+    /* 은하수 아방가르드 배경화면 */
+    .stApp {
+        background: linear-gradient(135deg, #0d001a 0%, #1a0033 25%, #330066 50%, #1b004d 75%, #050014 100%) !important;
+        background-attachment: fixed !important;
+        color: #e6f2ff !important;
     }
+
+    /* 카드 헤더 스타일 */
+    .cosmic-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(212, 175, 55, 0.6);
+        box-shadow: 0 0 25px rgba(186, 85, 211, 0.4), inset 0 0 15px rgba(0, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 1.8rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        text-align: center;
+    }
+
+    /* 수정구슬 애니메이션 컨테이너 */
+    .crystal-ball-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        margin: 2rem 0;
+        background: rgba(15, 0, 30, 0.7);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 0, 255, 0.3);
+        box-shadow: 0 0 40px rgba(138, 43, 226, 0.6);
+    }
+
+    /* 광채 나는 회전 수정구슬 이펙트 */
+    .glowing-orb {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ffffff, #e600ff 40%, #00ffff 70%, #0d001a 100%);
+        box-shadow: 0 0 30px #e600ff, 0 0 60px #00ffff, inset 0 0 20px #ffffff;
+        animation: pulseOrb 2s infinite alternate, spinOrb 6s linear infinite;
+        margin-bottom: 1.8rem;
+    }
+
+    @keyframes pulseOrb {
+        0% { transform: scale(0.95); box-shadow: 0 0 25px #e600ff, 0 0 50px #00ffff; }
+        100% { transform: scale(1.1); box-shadow: 0 0 45px #ff007f, 0 0 80px #00ffff; }
+    }
+
+    @keyframes spinOrb {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+    }
+
+    /* 예언 메시지 텍스트 */
+    .oracle-text {
+        font-size: 1.4rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #ff007f, #00ffff, #ff00ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: glowText 1.5s ease-in-out infinite alternate;
+        text-align: center;
+    }
+
+    @keyframes glowText {
+        from { opacity: 0.7; }
+        to { opacity: 1; }
+    }
+
     [data-testid="stMetricValue"] {
-        font-size: 1.4rem !important;
-        font-weight: 700;
-    }
-    .team-header-card {
-        background-color: var(--background-secondary-color);
-        border-radius: 12px;
-        padding: 1.2rem 1.5rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(128, 128, 128, 0.2);
+        color: #00ffff !important;
+        font-weight: 800;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 미래 날짜 선택 & 검색 섹션 (1년 뒤 ~ 100년 뒤)
+# 미래 날짜 설정 (1년 뒤 ~ 100년 뒤)
 # ============================================================
 
 today = date.today()
 one_year_later = date(today.year + 1, today.month, today.day)
 hundred_years_later = date(today.year + 100, 12, 31)
 
-st.title("🔮 KBO 100년 미래 예언 시뮬레이터")
-st.caption(f"미래 타임라인({one_year_later.year}년 ~ {hundred_years_later.year}년)의 KBO 성적 및 가을야구 예언")
+st.title("🔮 COSMIC KBO PREDICT")
+st.caption("🌌 은하수의 코스믹 파동을 통해 미래 100년의 KBO 운명을 예언합니다.")
 
 st.divider()
 
@@ -53,27 +113,25 @@ col_date, col_search = st.columns([1, 1])
 
 with col_date:
     selected_date = st.date_input(
-        "🔮 예언할 미래 날짜 선택",
+        "📅 예언 시점 선택",
         value=one_year_later,
         min_value=one_year_later,
-        max_value=hundred_years_later,
-        help="현재로부터 1년 뒤부터 100년 뒤까지의 미래 날짜를 지정해 성적을 예언합니다."
+        max_value=hundred_years_later
     )
 
 with col_search:
     user_input = st.text_input(
-        "🔍 팀명 검색",
+        "🔍 예언받을 팀명 입력",
         placeholder="팀명 입력 (예: LG, KIA, 삼성, KT)"
     )
 
+search_button = st.button("✨ 미래 운명 예언받기", use_container_width=True)
+
 # ============================================================
-# 독립형 데이터 엔진 (날짜 시드 기반 시뮬레이션)
+# 알고리즘 데이터 생성기
 # ============================================================
 
 def generate_kbo_rankings(target_date):
-    """
-    미래 날짜 시드(Seed)를 기반으로 언제 조회하든 일관된 미래 성적을 예언합니다.
-    """
     base_teams = {
         "KT": {"name": "KT 위즈", "keywords": ["KT", "kt", "케이티", "KT 위즈", "ktwiz"]},
         "삼성": {"name": "삼성 라이온즈", "keywords": ["삼성", "삼성 라이온즈", "삼성라이온즈"]},
@@ -87,30 +145,20 @@ def generate_kbo_rankings(target_date):
         "키움": {"name": "키움 히어로즈", "keywords": ["키움", "키움 히어로즈", "키움히어로즈"]}
     }
 
-    # 미래 날짜를 난수 시드로 사용
     seed_value = int(target_date.strftime("%Y%m%d"))
     rng = random.Random(seed_value)
 
     team_keys = list(base_teams.keys())
     rng.shuffle(team_keys)
 
-    # 월별 소화 경기수 계산
     month = target_date.month
-    if month < 4:
-        total_games = 0
-    elif month > 10:
-        total_games = 144
-    else:
-        total_games = min(144, int((month - 3) * 22 + (target_date.day * 0.7)))
+    total_games = 144 if month > 10 or month < 4 else min(144, int((month - 3) * 22 + (target_date.day * 0.7)))
 
     teams_data = {}
     for rank, key in enumerate(team_keys, start=1):
-        if total_games > 0:
-            wins = max(0, int(total_games * (0.64 - (rank * 0.028))))
-            draws = rng.randint(0, 3) if total_games > 20 else 0
-            losses = max(0, total_games - wins - draws)
-        else:
-            wins, losses, draws = 0, 0, 0
+        wins = max(0, int(total_games * (0.64 - (rank * 0.028)))) if total_games > 0 else 0
+        draws = rng.randint(0, 3) if total_games > 20 else 0
+        losses = max(0, total_games - wins - draws) if total_games > 0 else 0
 
         win_rate = f"{(wins / (wins + losses)):.3f}" if (wins + losses) > 0 else ".000"
         gb = f"{(rank - 1) * 2.5:.1f}"
@@ -131,41 +179,6 @@ def generate_kbo_rankings(target_date):
 
     return teams_data
 
-# 데이터 생성
-current_teams = generate_kbo_rankings(selected_date)
-
-# ============================================================
-# 알고리즘 & 검색 함수
-# ============================================================
-
-def calculate_playoff_probability(team, teams_data):
-    rank = team["rank"]
-    try:
-        win_rate = float(team["win_rate"])
-    except ValueError:
-        win_rate = 0.500
-
-    fifth_team = next((t for t in teams_data.values() if t["rank"] == 5), None)
-    
-    try:
-        current_gb = float(team["games_behind"])
-        fifth_gb = float(fifth_team["games_behind"]) if fifth_team else 0.0
-        gb_from_5th = current_gb - fifth_gb
-    except ValueError:
-        gb_from_5th = 0.0
-
-    score = win_rate * 100
-
-    if rank <= 5:
-        score += (6 - rank) * 5
-        score -= gb_from_5th * 2.5
-    else:
-        score -= (rank - 5) * 6
-        score -= gb_from_5th * 3.5
-
-    score = max(1, min(99, score))
-    return round(score)
-
 def find_team(query, teams_data):
     if not query:
         return None
@@ -178,15 +191,16 @@ def find_team(query, teams_data):
                 return team
     return None
 
+current_teams = generate_kbo_rankings(selected_date)
 selected_team = find_team(user_input, current_teams)
 
 # ============================================================
-# 사이드바: 미래 10개 구단 순위 예언
+# 사이드바 순위표
 # ============================================================
 
 with st.sidebar:
-    st.header("🔮 미래 순위 예언표")
-    st.caption(f"예언 타임라인: {selected_date.strftime('%Y-%m-%d')}")
+    st.header("🔮 코스믹 순위 예언")
+    st.caption(f"타임라인: {selected_date.strftime('%Y-%m-%d')}")
     st.divider()
 
     sorted_teams = sorted(current_teams.values(), key=lambda x: x["rank"])
@@ -194,68 +208,85 @@ with st.sidebar:
         rank = item["rank"]
         name = item["name"]
         win_rate = item["win_rate"]
-        gb = item["games_behind"]
+        highlight = "👈" if selected_team and selected_team["name"] == name else ""
         
-        is_selected = selected_team and selected_team["name"] == name
-        highlight = "👈" if is_selected else ""
-        rank_badge = f"**{rank}위**" if rank <= 5 else f"{rank}위"
-        
-        st.write(f"{rank_badge} **{name}** {highlight}")
-        st.caption(f"예상 승률: {win_rate} | 게임차: {gb}")
-        
-        if rank == 5:
-            st.markdown("--- 🔻 **가을야구 커트라인** 🔻 ---")
-        else:
-            st.markdown("<hr style='margin: 3px 0 6px 0; border: none; border-top: 1px dashed #cccccc;'>", unsafe_allow_html=True)
+        st.write(f"**{rank}위** {name} {highlight}")
+        st.caption(f"승률: {win_rate} | 게임차: {item['games_behind']}")
+        st.markdown("<hr style='margin: 3px 0 6px 0; border: none; border-top: 1px dashed rgba(255,255,255,0.2);'>", unsafe_allow_html=True)
 
 # ============================================================
-# 메인 화면
+# 약 10초간의 수정구슬 로딩 이펙트 및 결과 출력
 # ============================================================
 
-if user_input:
+if search_button or user_input:
     if selected_team is None:
-        st.error("해당 팀을 찾을 수 없습니다.")
-        st.info("💡 **입력 가능 예시:** KT, 삼성, LG, KIA, 두산, 롯데, 한화, NC, SSG, 키움")
+        st.error("은하수의 파동에서 해당 팀을 찾을 수 없습니다. 올바른 팀명을 입력하세요.")
     else:
         team = selected_team
-        
+
+        # 수정구슬 이펙트 placeholder
+        loading_placeholder = st.empty()
+
+        # 약 10초 동안 애니메이션 연출
+        phrases = [
+            "수정구슬이 하늘의 힘으로 예언중 입니다...",
+            "🌌 은하수의 코스믹 에너지를 모으는 중...",
+            "✨ 시공간을 넘어 미래 KBO의 기운을 감지하고 있습니다...",
+            "🔮 별들의 배치가 완성되어 가고 있습니다...",
+            "⚡ 최종 미래 궤적이 수정구슬에 투영됩니다!"
+        ]
+
+        for i in range(10):
+            phrase = phrases[i % len(phrases)]
+            progress_percent = (i + 1) * 10
+            
+            loading_placeholder.markdown(f"""
+                <div class="crystal-ball-container">
+                    <div class="glowing-orb"></div>
+                    <div class="oracle-text">{phrase}</div>
+                    <p style="margin-top: 1rem; color: #00ffff; font-size: 0.9rem;">공명률 {progress_percent}%</p>
+                </div>
+            """, unsafe_allow_html=True)
+            time.sleep(1.0)  # 총 10초 대기
+
+        # 10초 후 연출 제거
+        loading_placeholder.empty()
+
+        # 결과 화면 출력
         st.markdown(f"""
-            <div class="team-header-card">
-                <h2 style="margin:0; padding-bottom: 5px;">🔮 {team['name']} <span style="font-size:0.9rem; font-weight:normal; opacity:0.8;">({selected_date.year}년 예언)</span></h2>
-                <p style="margin:0; font-size:1rem; font-weight:600;">예상 순위: <strong>{team['rank']}위</strong> | {team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
+            <div class="cosmic-card">
+                <h2 style="margin:0; color:#00ffff;">🔮 {team['name']}의 미래 예언</h2>
+                <p style="font-size:1.1rem; opacity:0.9; margin-top:5px;">시점: {selected_date.year}년 {selected_date.month}월 {selected_date.day}일</p>
+                <h1 style="font-size:2.5rem; color:#ff00ff; margin: 15px 0;">예상 순위: {team['rank']}위</h1>
+                <p style="font-size:1.2rem; font-weight:600;">{team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
             </div>
         """, unsafe_allow_html=True)
 
-        tab1, tab2 = st.tabs(["📊 미래 예상 성적", "🍂 가을야구 확률 예언"])
+        tab1, tab2 = st.tabs(["🌌 세부 예언 지표", "🍂 가을야구 운명"])
 
         with tab1:
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("예상 순위", f"{team['rank']}위")
-            c2.metric("예상 전적", f"{team['wins']}승 {team['draws']}무 {team['losses']}패")
-            c3.metric("예상 승률", team["win_rate"])
-            c4.metric("연속 기록", team["streak"])
+            c1, c2, c3 = st.columns(3)
+            c1.metric("소화 경기수", f"{team['games']}경기")
+            c2.metric("1위와 게임차", f"{team['games_behind']}경기")
+            c3.metric("최근 기운", team["streak"])
 
             st.markdown("---")
-            c_a, c_b, c_c = st.columns(3)
-            c_a.metric("소화 경기수", f"{team['games']}경기")
-            c_b.metric("1위와 게임차", f"{team['games_behind']}경기")
-            c_c.metric("팀 ERA / 타율", f"{team['era']} / {team['batting_avg']}")
+            ca, cb = st.columns(2)
+            ca.metric("예상 평균자책점(ERA)", team["era"])
+            cb.metric("예상 팀 타율", team["batting_avg"])
 
         with tab2:
-            probability = calculate_playoff_probability(team, current_teams)
+            prob = max(5, min(98, 100 - (team['rank'] - 1) * 10))
             st.markdown("##### 🔮 포스트시즌 진출 예언 확률")
-            st.progress(probability / 100)
+            st.progress(prob / 100)
+            st.metric("진출 확률", f"{prob}%")
             
-            p_col1, p_col2 = st.columns([1, 2])
-            with p_col1:
-                st.metric("진출 예언 확률", f"{probability}%")
-            with p_col2:
-                if probability >= 70:
-                    st.success("미래의 가을야구 진출 가능성이 매우 명확합니다!")
-                elif probability >= 40:
-                    st.warning("미래의 치열한 5위 싸움이 예견됩니다.")
-                else:
-                    st.error("미래 성적 반등을 위한 과감한 리빌딩이 필요합니다.")
+            if prob >= 70:
+                st.success("✨ 하늘의 기운이 포스트시즌 진출을 강하게 암시합니다!")
+            elif prob >= 40:
+                st.warning("⚡ 치열한 가을야구 경계선에서 운명이 엇갈리고 있습니다.")
+            else:
+                st.error("🌌 이번 시점의 운명은 리빌딩의 시련을 예고합니다.")
 
 else:
-    st.info("👆 상단에서 **예언할 미래 날짜**를 선택하고 **팀명**을 검색해 보세요. (좌측 사이드바에서 미래 순위표를 확인할 수 있습니다.)")
+    st.info("👆 상단에서 **미래 날짜**와 **팀명**을 입력하고 **'미래 운명 예언받기'** 버튼을 누르면 수정구슬의 예언이 시작됩니다.")
