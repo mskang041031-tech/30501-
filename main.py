@@ -3,14 +3,43 @@ from datetime import date, timedelta
 import random
 
 # ============================================================
-# Streamlit 기본 설정
+# Streamlit 페이지 설정
 # ============================================================
 
 st.set_page_config(
-    page_title="KBO TEAM INFO",
+    page_title="KBO TEAM DASHBOARD",
     page_icon="⚾",
     layout="centered"
 )
+
+# ============================================================
+# 커스텀 CSS (카드 스타일 & UI 개선)
+# ============================================================
+
+st.markdown("""
+    <style>
+    /* 메인 컨테이너 패딩 조절 */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+    
+    /* metric 카드 디자인 개선 */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+        font-weight: 700;
+    }
+    
+    /* 팀 상태 카드 커스텀 스타일 */
+    .team-header-card {
+        background-color: var(--background-secondary-color);
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # 날짜 선택 설정 (오늘 ~ 10년 전)
@@ -19,30 +48,34 @@ st.set_page_config(
 today = date.today()
 ten_years_ago = today - timedelta(days=365 * 10)
 
-st.title("⚾ KBO TEAM INFO")
+st.title("⚾ KBO TEAM DASHBOARD")
+st.caption("과거 10년간의 KBO 데이터 및 시즌 진출 확률 조회")
 
-# 날짜 선택 피커 (Sidebar 또는 상단 배치)
-selected_date = st.date_input(
-    "📅 조회할 기준일을 선택하세요",
-    value=today,
-    min_value=ten_years_ago,
-    max_value=today,
-    help="오늘부터 최대 10년 전까지의 KBO 성적을 조회할 수 있습니다."
-)
-
-st.caption(f"선택된 기준일: **{selected_date.strftime('%Y년 %m월 %d일')}**")
 st.divider()
 
+# 컨트롤 섹션 (날짜 선택 & 검색)
+col_date, col_search = st.columns([1, 1])
+
+with col_date:
+    selected_date = st.date_input(
+        "📅 기준일 선택",
+        value=today,
+        min_value=ten_years_ago,
+        max_value=today,
+        help="오늘부터 최대 10년 전까지의 KBO 성적을 조회할 수 있습니다."
+    )
+
+with col_search:
+    user_input = st.text_input(
+        "🔍 팀명 검색",
+        placeholder="팀명 입력 (예: LG, KIA, 삼성)"
+    )
+
 # ============================================================
-# 동적 팀 데이터 생성 함수 (날짜 연동 시뮬레이션)
+# 동적 팀 데이터 생성 함수
 # ============================================================
 
 def get_teams_by_date(target_date):
-    """
-    선택된 날짜에 따라 팀 성적 데이터를 가공하는 함수.
-    (실제 운영 환경에서는 DB나 KBO API와 연동하여 호출)
-    """
-    # 기본 10개 구단 프로필
     base_teams = {
         "KT": {"name": "KT 위즈", "keywords": ["KT", "kt", "케이티", "KT 위즈", "ktwiz"]},
         "삼성": {"name": "삼성 라이온즈", "keywords": ["삼성", "삼성 라이온즈", "삼성라이온즈"]},
@@ -56,17 +89,14 @@ def get_teams_by_date(target_date):
         "키움": {"name": "키움 히어로즈", "keywords": ["키움", "키움 히어로즈", "키움히어로즈"]}
     }
 
-    # 날짜 시드값으로 일관성 있는 난수 성적 생성 (테스트용)
     seed_value = int(target_date.strftime("%Y%m%d"))
     rng = random.Random(seed_value)
 
-    # 임의 순위 할당
     team_keys = list(base_teams.keys())
     rng.shuffle(team_keys)
 
     teams_data = {}
     for rank, key in enumerate(team_keys, start=1):
-        # 시즌 진행 상황 반영 (월에 따른 경기 수 차등)
         month = target_date.month
         if month < 4 or month > 10:
             games = 144 if month > 10 else 0
@@ -97,12 +127,7 @@ def get_teams_by_date(target_date):
 
     return teams_data
 
-# 선택된 날짜 기준 데이터 세트 생성
 current_teams = get_teams_by_date(selected_date)
-
-# ============================================================
-# 가을야구 예상 확률 계산
-# ============================================================
 
 def calculate_playoff_probability(team, teams_data):
     rank = team["rank"]
@@ -127,11 +152,9 @@ def calculate_playoff_probability(team, teams_data):
     score = max(1, min(99, score))
     return round(score)
 
-# ============================================================
-# 팀 검색 함수
-# ============================================================
-
 def find_team(user_input, teams_data):
+    if not user_input:
+        return None
     cleaned_input = user_input.replace(" ", "").lower()
     for team_code, team in teams_data.items():
         if cleaned_input == team_code.lower():
@@ -141,56 +164,102 @@ def find_team(user_input, teams_data):
                 return team
     return None
 
+selected_team = find_team(user_input, current_teams)
+
 # ============================================================
-# 메인 검색 UI
+# 사이드바: 전체 순위표 요약
 # ============================================================
 
-user_input = st.text_input(
-    "🔍 팀 이름을 입력하세요",
-    placeholder="예: LG / KIA / 삼성 / 한화"
-)
+with st.sidebar:
+    st.header("🏆 전체 구단 순위표")
+    st.caption(f"기준일: {selected_date.strftime('%Y-%m-%d')}")
+    st.divider()
+
+    # 순위순 정렬
+    sorted_teams = sorted(current_teams.values(), key=lambda x: x["rank"])
+
+    for item in sorted_teams:
+        rank = item["rank"]
+        name = item["name"]
+        win_rate = item["win_rate"]
+        gb = item["games_behind"]
+        
+        # 검색된 팀 하이라이트 표시
+        is_selected = selected_team and selected_team["name"] == name
+        highlight = "👈" if is_selected else ""
+        
+        # 1~5위는 강조 스타일
+        rank_badge = f"**{rank}위**" if rank <= 5 else f"{rank}위"
+        
+        st.write(f"{rank_badge} **{name}** {highlight}")
+        st.caption(f"승률: {win_rate} | 게임차: {gb}")
+        
+        # 5위 커트라인 구분선
+        if rank == 5:
+            st.markdown("--- 🔻 **포스트시즌 커트라인** 🔻 ---")
+        else:
+            st.markdown("<hr style='margin: 4px 0 8px 0; border: none; border-top: 1px dashed #cccccc;'>", unsafe_allow_html=True)
+
+# ============================================================
+# 메인 대시보드 UI
+# ============================================================
 
 if user_input:
-    team = find_team(user_input, current_teams)
-
-    if team is None:
+    if selected_team is None:
         st.error("해당 팀을 찾을 수 없습니다.")
-        st.info("💡 **입력 가능한 팀:** KT, 삼성, LG, KIA, 두산, 롯데, 한화, NC, SSG, 키움")
+        st.info("💡 **입력 가능 팀:** KT, 삼성, LG, KIA, 두산, 롯데, 한화, NC, SSG, 키움")
     else:
-        # 팀 Header
-        st.header(f"⚾ {team['name']} ({selected_date.year} 시즌)")
-        if team["rank"] <= 5:
-            st.success(f"🔥 기준일 당시 **{team['rank']}위** · 포스트시즌 진출권")
-        else:
-            st.warning(f"⚡ 기준일 당시 **{team['rank']}위** · 가을야구 경쟁 중")
+        team = selected_team
+        
+        # 히어로 헤더 카드
+        st.markdown(f"""
+            <div class="team-header-card">
+                <h2 style="margin:0; padding-bottom: 5px;">⚾ {team['name']} <span style="font-size:0.9rem; font-weight:normal; opacity:0.8;">({selected_date.year} 시즌)</span></h2>
+                <p style="margin:0; font-size:1rem; font-weight:600;">현재 순위: <strong>{team['rank']}위</strong> | {team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
+            </div>
+        """, unsafe_allow_html=True)
 
-        # 1. 순위 및 성적
-        st.subheader("🏆 순위 & 시즌 성적")
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("순위", f"{team['rank']}위")
-        col2.metric("전적", f"{team['wins']}승 {team['draws']}무 {team['losses']}패")
-        col3.metric("승률", team["win_rate"])
-        col4.metric("연속", team["streak"])
+        # 탭을 활용한 정보 분리
+        tab1, tab2, tab3 = st.tabs(["📊 팀 성적 상세", "🍂 가을야구 예측", "📰 최근 경기"])
 
-        col_a, col_b, col_c = st.columns(3)
-        col_a.metric("소화 경기수", f"{team['games']}경기")
-        col_b.metric("1위와 게임차", f"{team['games_behind']}경기")
-        col_c.metric("팀 평균자책 / 타율", f"{team['era']} / {team['batting_avg']}")
+        with tab1:
+            st.caption("시즌 종합지표")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("순위", f"{team['rank']}위")
+            c2.metric("전적", f"{team['wins']}승 {team['draws']}무 {team['losses']}패")
+            c3.metric("승률", team["win_rate"])
+            c4.metric("연속 기록", team["streak"])
 
-        st.divider()
+            st.markdown("---")
+            c_a, c_b, c_c = st.columns(3)
+            c_a.metric("소화 경기수", f"{team['games']}경기")
+            c_b.metric("1위와 게임차", f"{team['games_behind']}경기")
+            c_c.metric("ERA / 타율", f"{team['era']} / {team['batting_avg']}")
 
-        # 2. 가을야구 예상 확률
-        st.subheader("🍂 가을야구 예상 확률")
-        probability = calculate_playoff_probability(team, current_teams)
+        with tab2:
+            probability = calculate_playoff_probability(team, current_teams)
+            
+            st.markdown("##### 🏆 포스트시즌 예상 진출 확률")
+            st.progress(probability / 100)
+            
+            p_col1, p_col2 = st.columns([1, 2])
+            with p_col1:
+                st.metric("예상 진출 확률", f"{probability}%")
+            with p_col2:
+                if probability >= 70:
+                    st.success("포스트시즌 진출 가능성이 매우 높습니다!")
+                elif probability >= 40:
+                    st.warning("치열한 5위 싸움이 진행 중입니다.")
+                else:
+                    st.error("가을야구 진출을 위해 반등이 필요합니다.")
+            
+            st.caption(f"※ {selected_date.strftime('%Y-%m-%d')} 기준 순위, 승률, 5위 차를 종합 반영한 알고리즘 수치입니다.")
 
-        st.progress(probability / 100)
-        st.markdown(f"### **{probability}%**")
-        st.caption(f"※ {selected_date.strftime('%Y-%m-%d')} 기준 순위, 승률, 게임차를 반영한 수치입니다.")
+        with tab3:
+            st.markdown("##### 📌 가장 최근 경기 결과")
+            st.info(f"**{team['recent_game']}**")
+            st.caption(f"기준일자: {selected_date.strftime('%Y년 %m월 %d일')}")
 
-        st.divider()
-
-        # 3. 최근 경기 결과
-        st.subheader("📰 최근 경기 결과")
-        st.info(f"📌 **{team['recent_game']}**")
-
-        st.caption(f"데이터 기준일: {selected_date.strftime('%Y년 %m월 %d일')}")
+else:
+    # 검색 전 안내 화면
+    st.info("👆 상단에서 **기준일**을 선택하고 **팀명**을 검색해 주세요. (왼쪽 사이드바에서 전체 순위를 확인할 수 있습니다.)")
