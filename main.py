@@ -10,32 +10,79 @@ import time
 st.set_page_config(
     page_title="🔮 COSMIC KBO PREDICT",
     page_icon="🌌",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"  # 사이드바 닫힘 기본 설정
 )
 
 # ============================================================
-# 아방가르드 은하수 & 수정구슬 연출 CSS (무채색 제거, 화려한 그라데이션)
+# 판타지 타이포그래피 & 아방가르드 코스믹 CSS (사이드바 제거)
 # ============================================================
 
 st.markdown("""
+    <!-- 구글 폰트 Import: 판타지 뾰족한 스타일 폰트 -->
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+    /* 사이드바 완전히 숨기기 */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
     /* 은하수 아방가르드 배경화면 */
     .stApp {
-        background: linear-gradient(135deg, #0d001a 0%, #1a0033 25%, #330066 50%, #1b004d 75%, #050014 100%) !important;
+        background: linear-gradient(135deg, #090014 0%, #15002b 25%, #2a004f 50%, #120033 75%, #03000a 100%) !important;
         background-attachment: fixed !important;
         color: #e6f2ff !important;
+        font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    /* 이미지의 판타지 텍스트 타이틀 스타일 (그라데이션 + 3D 핑크 그림자 + 뾰족한 폰트) */
+    .fantasy-title {
+        font-family: 'Cinzel Decorative', 'Noto Sans KR', cursive, serif;
+        font-size: 3rem !important;
+        font-weight: 900;
+        text-align: center;
+        letter-spacing: 2px;
+        background: linear-gradient(180deg, #e1ff75 0%, #00f0ff 45%, #0040ff 85%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+        filter: drop-shadow(3px 4px 0px #ff007f) drop-shadow(0px 0px 18px rgba(0, 240, 255, 0.8));
+        margin-bottom: 0.2rem;
+    }
+
+    .fantasy-subtitle {
+        text-align: center;
+        font-size: 1rem;
+        color: #00ffff;
+        opacity: 0.85;
+        margin-bottom: 2rem;
+        letter-spacing: 1px;
     }
 
     /* 카드 헤더 스타일 */
     .cosmic-card {
-        background: rgba(255, 255, 255, 0.08);
-        border: 2px solid rgba(212, 175, 55, 0.6);
-        box-shadow: 0 0 25px rgba(186, 85, 211, 0.4), inset 0 0 15px rgba(0, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.06);
+        border: 2px solid rgba(0, 240, 255, 0.5);
+        box-shadow: 0 0 30px rgba(255, 0, 127, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.2);
         border-radius: 20px;
-        padding: 1.8rem;
+        padding: 2rem;
         margin-bottom: 2rem;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
         text-align: center;
+    }
+
+    /* 카드 내 판타지 텍스트 */
+    .cosmic-card h1 {
+        font-family: 'Cinzel Decorative', 'Noto Sans KR', sans-serif;
+        font-weight: 900;
+        background: linear-gradient(180deg, #ff99ec 0%, #ff007f 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(2px 2px 0px #00ffff);
     }
 
     /* 수정구슬 애니메이션 컨테이너 */
@@ -46,10 +93,10 @@ st.markdown("""
         justify-content: center;
         padding: 3rem 1rem;
         margin: 2rem 0;
-        background: rgba(15, 0, 30, 0.7);
+        background: rgba(12, 0, 25, 0.8);
         border-radius: 25px;
-        border: 1px solid rgba(255, 0, 255, 0.3);
-        box-shadow: 0 0 40px rgba(138, 43, 226, 0.6);
+        border: 1px solid rgba(255, 0, 127, 0.4);
+        box-shadow: 0 0 50px rgba(138, 43, 226, 0.7);
     }
 
     /* 광채 나는 회전 수정구슬 이펙트 */
@@ -57,15 +104,15 @@ st.markdown("""
         width: 140px;
         height: 140px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #ffffff, #e600ff 40%, #00ffff 70%, #0d001a 100%);
-        box-shadow: 0 0 30px #e600ff, 0 0 60px #00ffff, inset 0 0 20px #ffffff;
+        background: radial-gradient(circle at 35% 35%, #ffffff, #ff00a0 40%, #00ffff 75%, #0a001a 100%);
+        box-shadow: 0 0 35px #ff007f, 0 0 70px #00ffff, inset 0 0 25px #ffffff;
         animation: pulseOrb 2s infinite alternate, spinOrb 6s linear infinite;
         margin-bottom: 1.8rem;
     }
 
     @keyframes pulseOrb {
-        0% { transform: scale(0.95); box-shadow: 0 0 25px #e600ff, 0 0 50px #00ffff; }
-        100% { transform: scale(1.1); box-shadow: 0 0 45px #ff007f, 0 0 80px #00ffff; }
+        0% { transform: scale(0.95); box-shadow: 0 0 25px #ff007f, 0 0 50px #00ffff; }
+        100% { transform: scale(1.1); box-shadow: 0 0 50px #ff00a0, 0 0 90px #00ffff; }
     }
 
     @keyframes spinOrb {
@@ -75,9 +122,10 @@ st.markdown("""
 
     /* 예언 메시지 텍스트 */
     .oracle-text {
-        font-size: 1.4rem;
+        font-family: 'Cinzel Decorative', 'Noto Sans KR', sans-serif;
+        font-size: 1.3rem;
         font-weight: 800;
-        background: linear-gradient(90deg, #ff007f, #00ffff, #ff00ff);
+        background: linear-gradient(90deg, #e1ff75, #00ffff, #ff007f);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         animation: glowText 1.5s ease-in-out infinite alternate;
@@ -104,8 +152,8 @@ today = date.today()
 one_year_later = date(today.year + 1, today.month, today.day)
 hundred_years_later = date(today.year + 100, 12, 31)
 
-st.title("🔮 COSMIC KBO PREDICT")
-st.caption("🌌 은하수의 코스믹 파동을 통해 미래 100년의 KBO 운명을 예언합니다.")
+st.markdown('<div class="fantasy-title">COSMIC KBO PREDICT</div>', unsafe_allow_html=True)
+st.markdown('<div class="fantasy-subtitle">🌌 은하수의 코스믹 파동을 통해 미래 100년의 KBO 운명을 예언합니다.</div>', unsafe_allow_html=True)
 
 st.divider()
 
@@ -195,26 +243,6 @@ current_teams = generate_kbo_rankings(selected_date)
 selected_team = find_team(user_input, current_teams)
 
 # ============================================================
-# 사이드바 순위표
-# ============================================================
-
-with st.sidebar:
-    st.header("🔮 코스믹 순위 예언")
-    st.caption(f"타임라인: {selected_date.strftime('%Y-%m-%d')}")
-    st.divider()
-
-    sorted_teams = sorted(current_teams.values(), key=lambda x: x["rank"])
-    for item in sorted_teams:
-        rank = item["rank"]
-        name = item["name"]
-        win_rate = item["win_rate"]
-        highlight = "👈" if selected_team and selected_team["name"] == name else ""
-        
-        st.write(f"**{rank}위** {name} {highlight}")
-        st.caption(f"승률: {win_rate} | 게임차: {item['games_behind']}")
-        st.markdown("<hr style='margin: 3px 0 6px 0; border: none; border-top: 1px dashed rgba(255,255,255,0.2);'>", unsafe_allow_html=True)
-
-# ============================================================
 # 약 10초간의 수정구슬 로딩 이펙트 및 결과 출력
 # ============================================================
 
@@ -247,7 +275,7 @@ if search_button or user_input:
                     <p style="margin-top: 1rem; color: #00ffff; font-size: 0.9rem;">공명률 {progress_percent}%</p>
                 </div>
             """, unsafe_allow_html=True)
-            time.sleep(1.0)  # 총 10초 대기
+            time.sleep(1.0)
 
         # 10초 후 연출 제거
         loading_placeholder.empty()
@@ -255,9 +283,9 @@ if search_button or user_input:
         # 결과 화면 출력
         st.markdown(f"""
             <div class="cosmic-card">
-                <h2 style="margin:0; color:#00ffff;">🔮 {team['name']}의 미래 예언</h2>
+                <h2 style="margin:0; color:#00ffff; font-family:'Noto Sans KR';">🔮 {team['name']}의 미래 예언</h2>
                 <p style="font-size:1.1rem; opacity:0.9; margin-top:5px;">시점: {selected_date.year}년 {selected_date.month}월 {selected_date.day}일</p>
-                <h1 style="font-size:2.5rem; color:#ff00ff; margin: 15px 0;">예상 순위: {team['rank']}위</h1>
+                <h1 style="font-size:2.8rem; margin: 15px 0;">예상 순위: {team['rank']}위</h1>
                 <p style="font-size:1.2rem; font-weight:600;">{team['wins']}승 {team['draws']}무 {team['losses']}패 (승률 {team['win_rate']})</p>
             </div>
         """, unsafe_allow_html=True)
